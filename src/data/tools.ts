@@ -5,9 +5,19 @@ export interface Tool {
   long: string;
   icon: string;
   tag: string;
+  external?: string;
 }
 
 export const tools: Tool[] = [
+  {
+    slug: 'exam',
+    title: '刷题助手',
+    desc: '自己的题库应用，刷题、错题本和模拟考。',
+    long: '刷题用的独立应用，题库、错题本、模拟考都在里面。它有自己的仓库，单独部署，从这儿过去就行。',
+    icon: 'book',
+    tag: '学习',
+    external: 'https://sprlety.me/exam/',
+  },
   {
     slug: 'json',
     title: 'JSON 格式化',

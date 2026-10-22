@@ -4,6 +4,7 @@ import Base from '../layouts/Base.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import PostList from '../components/PostList.astro';
+import { tools } from '../data/tools';
 
 const all = await getCollection('posts', ({ data }) => !data.draft);
 const posts = all
@@ -12,7 +13,7 @@ const posts = all
 
 const total = all.length;
 const tags = new Set(all.flatMap((p) => p.data.tags));
-const toolsCount = 6;
+const toolsCount = tools.length;
 ---
 
 <Base title="首页" description="数字型嘟嘟可的个人站。写点东西，放些小工具。">
