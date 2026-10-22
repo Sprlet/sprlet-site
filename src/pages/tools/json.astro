@@ -1,0 +1,87 @@
+---
+import Tool from '../../layouts/Tool.astro';
+---
+
+<Tool slug="json">
+  <div class="tool-shell">
+    <div class="field">
+      <label for="in">输入 JSON</label>
+      <textarea id="in" spellcheck="false" placeholder='{"hello":"world"}'></textarea>
+    </div>
+    <div class="tool-actions">
+      <button class="btn-sm primary" id="fmt" type="button">美化</button>
+      <button class="btn-sm" id="min" type="button">压缩</button>
+      <button class="btn-sm" id="copy" type="button">复制结果</button>
+      <button class="btn-sm" id="clear" type="button">清空</button>
+    </div>
+    <div class="out" id="out" aria-live="polite">等待输入。</div>
+  </div>
+
+  <script>
+    const $ = (id: string) => document.getElementById(id)!;
+    const input = $('in') as HTMLTextAreaElement;
+    const out = $('out');
+
+    function show(text: string, err = false) {
+      out.textContent = text;
+      out.classList.toggle('err', err);
+    }
+
+    function parse() {
+      const raw = input.value.trim();
+      if (!raw) { show('等待输入。'); return null; }
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        const m = /position (\d+)/.exec(msg);
+        let where = '';
+        if (m) {
+          const pos = Number(m[1]);
+          const before = raw.slice(0, pos);
+          const line = before.split('\n').length;
+          const col = pos - before.lastIndexOf('\n');
+          where = `\n位置：第 ${line} 行，第 ${col} 列`;
+        }
+        show(`解析失败：${msg}${where}`, true);
+        return null;
+      }
+    }
+
+    $('fmt').addEventListener('click', () => {
+      const v = parse();
+      if (v === null) return;
+      show(JSON.stringify(v, null, 2));
+    });
+
+    $('min').addEventListener('click', () => {
+      const v = parse();
+      if (v === null) return;
+      show(JSON.stringify(v));
+    });
+
+    $('copy').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(out.textContent ?? '');
+        const btn = $('copy');
+        btn.textContent = '已复制';
+        setTimeout(() => (btn.textContent = '复制结果'), 1200);
+      } catch {
+        show('复制失败，浏览器没给权限。', true);
+      }
+    });
+
+    $('clear').addEventListener('click', () => {
+      input.value = '';
+      show('等待输入。');
+      input.focus();
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        $('fmt').click();
+      }
+    });
+  </script>
+</Tool>

@@ -1,0 +1,30 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Base title="找不到这个页面" description="404" noindex={true}>
+  <Header slot="header" />
+
+  <div class="wrap">
+    <div style="padding-block:clamp(4rem,12vw,8rem);max-width:44ch">
+      <p class="hero-eyebrow" style="animation:none">
+        <span class="dot" aria-hidden="true"></span>
+        404
+      </p>
+      <h1 style="font-size:var(--step-4);letter-spacing:-.032em;line-height:1.1;margin-bottom:1rem">
+        这页不存在。
+      </h1>
+      <p style="color:var(--fg-muted);font-size:var(--step-1);line-height:1.6;margin-bottom:2rem">
+        可能是链接写错了，也可能是我改过地址没留跳转。要不去别处看看？
+      </p>
+      <div class="hero-actions" style="margin-top:0">
+        <a class="btn btn-primary" href="/">回首页</a>
+        <a class="btn btn-ghost" href="/blog">看文章</a>
+      </div>
+    </div>
+  </div>
+
+  <Footer slot="footer" />
+</Base>

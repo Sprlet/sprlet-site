@@ -1,0 +1,121 @@
+---
+import Tool from '../../layouts/Tool.astro';
+---
+
+<Tool slug="timestamp">
+  <div class="tool-shell">
+    <div class="field">
+      <label for="ts">时间戳 或 日期字符串</label>
+      <input type="text" id="ts" placeholder="1750000000 / 1750000000000 / 2026-10-22 16:30" autocomplete="off" />
+    </div>
+    <div class="tool-actions">
+      <button class="btn-sm primary" id="conv" type="button">转换</button>
+      <button class="btn-sm" id="now" type="button">填入当前</button>
+      <button class="btn-sm" id="clear" type="button">清空</button>
+    </div>
+    <div class="out" id="out" aria-live="polite">等待输入。</div>
+  </div>
+
+  <div class="tool-shell" style="margin-top:1rem">
+    <div class="field">
+      <label>两个时间之间差多少</label>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <input type="text" id="a" placeholder="起点，可留空" autocomplete="off" style="flex:1 1 200px" />
+        <input type="text" id="b" placeholder="终点，可留空＝现在" autocomplete="off" style="flex:1 1 200px" />
+      </div>
+    </div>
+    <div class="tool-actions">
+      <button class="btn-sm" id="diff" type="button">算间隔</button>
+    </div>
+    <div class="out" id="out2" aria-live="polite">等待输入。</div>
+  </div>
+
+  <script>
+    const $ = (id: string) => document.getElementById(id)!;
+
+    function parseInput(raw: string): number | null {
+      const s = raw.trim();
+      if (!s) return null;
+      if (/^\d+$/.test(s)) {
+        const n = Number(s);
+        if (s.length <= 10) return n * 1000;
+        if (s.length <= 13) return n;
+        return null;
+      }
+      if (/^-?\d+(\.\d+)?$/.test(s)) {
+        return Math.round(Number(s) * 1000);
+      }
+      const d = new Date(s.replace(/\//g, '-'));
+      const t = d.getTime();
+      return Number.isNaN(t) ? null : t;
+    }
+
+    const pad = (n: number) => String(n).padStart(2, '0');
+
+    function fmtAll(ms: number) {
+      const d = new Date(ms);
+      const local =
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ` +
+        `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      return [
+        `本地时间    ${local}`,
+        `ISO 8601    ${d.toISOString()}`,
+        `UTC         ${d.toUTCString()}`,
+        `秒           ${Math.floor(ms / 1000)}`,
+        `毫秒         ${ms}`,
+        `星期         ${['日', '一', '二', '三', '四', '五', '六'][d.getDay()]}`,
+        `本年第       ${Math.ceil(((ms - new Date(d.getFullYear(), 0, 1).getTime()) / 86400000) | 0) + 1} 天`,
+      ].join('\n');
+    }
+
+    $('conv').addEventListener('click', () => {
+      const out = $('out');
+      const ms = parseInput(($('ts') as HTMLInputElement).value);
+      if (ms === null) {
+        out.textContent = '看不懂这个输入。给纯数字时间戳，或者 2026-10-22 16:30 这种格式。';
+        out.classList.add('err');
+        return;
+      }
+      out.classList.remove('err');
+      out.textContent = fmtAll(ms);
+    });
+
+    $('now').addEventListener('click', () => {
+      ($('ts') as HTMLInputElement).value = String(Math.floor(Date.now() / 1000));
+      $('conv').click();
+    });
+
+    $('clear').addEventListener('click', () => {
+      ($('ts') as HTMLInputElement).value = '';
+      $('out').textContent = '等待输入。';
+      $('out').classList.remove('err');
+    });
+
+    $('diff').addEventListener('click', () => {
+      const out = $('out2');
+      const aRaw = ($('a') as HTMLInputElement).value;
+      const bRaw = ($('b') as HTMLInputElement).value;
+      const a = parseInput(aRaw);
+      const b = bRaw.trim() ? parseInput(bRaw) : Date.now();
+      if (a === null || b === null) {
+        out.textContent = '有一头解析不了。';
+        out.classList.add('err');
+        return;
+      }
+      out.classList.remove('err');
+      let diff = Math.abs(b - a);
+      const day = Math.floor(diff / 86400000); diff -= day * 86400000;
+      const hr = Math.floor(diff / 3600000); diff -= hr * 3600000;
+      const min = Math.floor(diff / 60000); diff -= min * 60000;
+      const sec = Math.floor(diff / 1000);
+      out.textContent =
+        `${day} 天 ${hr} 小时 ${min} 分 ${sec} 秒\n` +
+        `合计 ${Math.abs(Math.round((b - a) / 1000))} 秒 / ${Math.abs(Math.round((b - a) / 60000))} 分钟 / ` +
+        `${Math.abs(Math.round((b - a) / 3600000))} 小时`;
+    });
+
+    ($('ts') as HTMLInputElement).addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') $('conv').click();
+    });
+  </script>
+</Tool>

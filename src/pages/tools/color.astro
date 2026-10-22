@@ -1,0 +1,137 @@
+---
+import Tool from '../../layouts/Tool.astro';
+---
+
+<Tool slug="color">
+  <div class="tool-shell">
+    <div class="field">
+      <label for="in">颜色值</label>
+      <input type="text" id="in" value="#ff6b4a" placeholder="#ff6b4a / rgb(255,107,74) / hsl(9,100%,65%)" autocomplete="off" />
+    </div>
+    <div class="tool-actions">
+      <button class="btn-sm primary" id="conv" type="button">转换</button>
+      <button class="btn-sm" id="rand" type="button">随机一个</button>
+    </div>
+
+    <div id="swatch" style="margin-top:1.2rem;height:74px;border-radius:10px;border:1px solid var(--line);background:#ff6b4a;transition:background .25s"></div>
+
+    <div class="out" id="out" aria-live="polite" style="margin-top:1rem">等待输入。</div>
+
+    <div style="margin-top:1.6rem;padding-top:1.3rem;border-top:1px solid var(--line)">
+      <div class="field">
+        <label>对比度检查（对白底 / 对黑底）</label>
+      </div>
+      <div class="out" id="contrast">—</div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id: string) => document.getElementById(id)!;
+
+    type RGB = [number, number, number];
+
+    function parseColor(s: string): RGB | null {
+      const t = s.trim().toLowerCase();
+      let m = /^#?([0-9a-f]{3})$/.exec(t);
+      if (m) return [...m[1]].map((c) => parseInt(c + c, 16)) as RGB;
+      m = /^#?([0-9a-f]{6})$/.exec(t);
+      if (m) {
+        const h = m[1];
+        return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+      }
+      m = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/.exec(t);
+      if (m) return [Number(m[1]), Number(m[2]), Number(m[3])];
+      m = /^hsla?\(\s*([\d.]+)(?:deg)?[\s,]+([\d.]+)%[\s,]+([\d.]+)%/.exec(t);
+      if (m) return hslToRgb(Number(m[1]), Number(m[2]) / 100, Number(m[3]) / 100);
+      return null;
+    }
+
+    function hslToRgb(h: number, s: number, l: number): RGB {
+      h = ((h % 360) + 360) % 360;
+      const c = (1 - Math.abs(2 * l - 1)) * s;
+      const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+      const m = l - c / 2;
+      let r = 0, g = 0, b = 0;
+      if (h < 60) [r, g, b] = [c, x, 0];
+      else if (h < 120) [r, g, b] = [x, c, 0];
+      else if (h < 180) [r, g, b] = [0, c, x];
+      else if (h < 240) [r, g, b] = [0, x, c];
+      else if (h < 300) [r, g, b] = [x, 0, c];
+      else [r, g, b] = [c, 0, x];
+      return [r, g, b].map((v) => Math.round((v + m) * 255)) as RGB;
+    }
+
+    function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
+      r /= 255; g /= 255; b /= 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      const l = (max + min) / 2;
+      let h = 0, s = 0;
+      if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        if (max === r) h = ((g - b) / d + (g < b ? 6 : 0));
+        else if (max === g) h = (b - r) / d + 2;
+        else h = (r - g) / d + 4;
+        h *= 60;
+      }
+      return [Math.round(h), Math.round(s * 100), Math.round(l * 100)];
+    }
+
+    const hex = ([r, g, b]: RGB) =>
+      '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
+
+    const lin = (v: number) => {
+      const c = v / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    };
+    const lum = ([r, g, b]: RGB) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+    const ratio = (a: RGB, b: RGB) => {
+      const l1 = lum(a), l2 = lum(b);
+      const [hi, lo] = l1 > l2 ? [l1, l2] : [l2, l1];
+      return (hi + 0.05) / (lo + 0.05);
+    };
+
+    function run() {
+      const el = $('in') as HTMLInputElement;
+      const out = $('out');
+      const sw = $('swatch');
+      const rgb = parseColor(el.value);
+      if (!rgb) {
+        out.textContent = '看不懂这个颜色。用 #ff6b4a、rgb(255,107,74) 或 hsl(9,100%,65%)。';
+        out.classList.add('err');
+        return;
+      }
+      out.classList.remove('err');
+      const [h, s, l] = rgbToHsl(...rgb);
+      const hx = hex(rgb);
+      out.textContent =
+        `HEX   ${hx}   ${hx.toUpperCase()}\n` +
+        `RGB   rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})\n` +
+        `HSL   hsl(${h}, ${s}%, ${l}%)\n` +
+        `CSS   color: ${hx};`;
+
+      sw.style.background = hx;
+
+      const w = ratio(rgb, [255, 255, 255]);
+      const k = ratio(rgb, [0, 0, 0]);
+      const verdict = (v: number) =>
+        v >= 7 ? 'AAA' : v >= 4.5 ? 'AA' : v >= 3 ? 'AA 大字' : '不达标';
+      $('contrast').textContent =
+        `对上白底  ${w.toFixed(2)} : 1   ${verdict(w)}\n` +
+        `对上黑底  ${k.toFixed(2)} : 1   ${verdict(k)}`;
+    }
+
+    $('conv').addEventListener('click', run);
+    $('rand').addEventListener('click', () => {
+      const h = Math.floor(Math.random() * 360);
+      const s = 55 + Math.floor(Math.random() * 35);
+      const l = 42 + Math.floor(Math.random() * 18);
+      ($('in') as HTMLInputElement).value = `hsl(${h}, ${s}%, ${l}%)`;
+      run();
+    });
+    ($('in') as HTMLInputElement).addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') run();
+    });
+    run();
+  </script>
+</Tool>

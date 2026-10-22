@@ -1,0 +1,59 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Base title="关于" description="关于这个站，和写它的人。">
+  <Header slot="header" />
+
+  <div class="wrap">
+    <div class="page-head">
+      <h1>关于</h1>
+      <p>一个自己动手搭的角落。</p>
+    </div>
+
+    <div class="page-body">
+      <div class="prose">
+        <p>
+          我是数字型嘟嘟可，通常在网上用 <strong>Sprlet</strong> 这个名字。
+          这里放两样东西：写下来的东西，和做成网页的小工具。
+        </p>
+
+        <h2>这个站怎么来的</h2>
+        <p>
+          最初只是想要一个能随手写点技术笔记的地方。后来发现，
+          那些临时拼凑的小脚本，与其烂在本地，不如做成一个能打开的页面——
+          自己用得上，别人偶尔也能顺手用一下。于是就有了<strong>工具</strong>那一栏。
+        </p>
+        <p>
+          技术上没有花哨的东西：<a href="https://astro.build" target="_blank" rel="noopener">Astro</a>
+          生成纯静态页，没有任何后端。所有工具都在浏览器里跑，
+          你输入的文本不会被发到任何服务器——这一点可以自己开开发者工具确认。
+        </p>
+
+        <h2>关于写作</h2>
+        <p>
+          更新不规律。想清楚了才写，写不清楚就先不写。
+          如果你在某篇文章里看到明显的错误，欢迎指出来——我会改，也会在页面上标注。
+        </p>
+
+        <h2>联系</h2>
+        <ul>
+          <li>GitHub：<a href="https://github.com/Sprlet" target="_blank" rel="noopener me">@Sprlet</a></li>
+          <li>邮件：把 GitHub 用户名接在 <code>@</code> 后面猜一猜，通常猜得中</li>
+        </ul>
+
+        <h2>这个站用了什么</h2>
+        <ul>
+          <li>Astro —— 静态站点生成，默认零 JS 输出</li>
+          <li>Pagefind —— 构建时切好的全文索引，搜索在浏览器里跑</li>
+          <li>Shiki —— 代码高亮，构建时完成，不拖运行时</li>
+          <li>没有 CDN、没有统计脚本、没有字体外链。全部资源都在自己域下</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <Footer slot="footer" />
+</Base>

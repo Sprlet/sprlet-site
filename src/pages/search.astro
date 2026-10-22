@@ -1,0 +1,45 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Base title="搜索" description="站内搜索" noindex={true}>
+  <Header slot="header" />
+
+  <div class="wrap">
+    <div class="page-head">
+      <h1>搜索</h1>
+      <p>在标题、正文和标签里找。索引在构建时就切好了，不用连服务器。</p>
+    </div>
+
+    <div class="page-body" style="max-width:760px">
+      <link href="/pagefind/pagefind-ui.css" rel="stylesheet" />
+      <div id="search"></div>
+    </div>
+  </div>
+
+  <Footer slot="footer" />
+
+  <script slot="scripts" is:inline src="/pagefind/pagefind-ui.js"></script>
+  <script slot="scripts" is:inline>
+    window.addEventListener('DOMContentLoaded', function () {
+      if (window.PagefindUI) {
+        new window.PagefindUI({
+          element: '#search',
+          showSubResults: true,
+          showImages: false,
+          translations: {
+            placeholder: '搜点什么…',
+            zero_results: '没找到「[SEARCH_TERM]」',
+            many_results: '找到 [COUNT] 条结果',
+            one_result: '找到 1 条结果',
+            searching: '正在找…',
+            load_more: '加载更多',
+            clear_search: '清空',
+          },
+        });
+      }
+    });
+  </script>
+</Base>

@@ -1,0 +1,27 @@
+# build
+dist/
+.astro/
+
+# deps
+node_modules/
+.pnpm-store/
+
+# logs
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# env
+.env
+.env.*
+!.env.example
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# pagefind temp
+.pagefind/

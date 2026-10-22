@@ -1,0 +1,144 @@
+---
+import Tool from '../../layouts/Tool.astro';
+---
+
+<Tool slug="codec">
+  <div class="tool-shell">
+    <div class="field">
+      <label for="mode">编码方式</label>
+      <select id="mode">
+        <option value="b64">Base64</option>
+        <option value="b64url">Base64 URL-safe</option>
+        <option value="url">URL 编码</option>
+        <option value="html">HTML 实体</option>
+        <option value="hex">十六进制</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="in">原文</label>
+      <textarea id="in" spellcheck="false" placeholder="要编码的内容"></textarea>
+    </div>
+
+    <div class="tool-actions">
+      <button class="btn-sm primary" id="enc" type="button">编码 ↓</button>
+      <button class="btn-sm" id="dec" type="button">↑ 解码</button>
+      <button class="btn-sm" id="swap" type="button">⇅ 上下对调</button>
+      <button class="btn-sm" id="copy" type="button">复制结果</button>
+      <button class="btn-sm" id="clear" type="button">清空</button>
+    </div>
+
+    <div class="field" style="margin-top:1.2rem">
+      <label for="out">结果</label>
+      <textarea id="out" spellcheck="false" style="min-height:6rem"
+        placeholder="编码结果出现在这里；要解码的话，把密文贴进这一格，再点「↑ 解码」"></textarea>
+    </div>
+    <p style="font-size:var(--step--1);color:var(--fg-faint);margin:0">
+      解码读的是<b>结果</b>这一格；「上下对调」可以交换两格内容。
+    </p>
+  </div>
+
+  <script>
+    const $ = (id: string) => document.getElementById(id)!;
+    const mode = $('mode') as HTMLSelectElement;
+    const input = $('in') as HTMLTextAreaElement;
+    const out = $('out') as HTMLTextAreaElement;
+
+    const toB64 = (s: string) => {
+      const bytes = new TextEncoder().encode(s);
+      let bin = '';
+      bytes.forEach((b) => (bin += String.fromCharCode(b)));
+      return btoa(bin);
+    };
+    const fromB64 = (s: string) => {
+      const bin = atob(s.replace(/\s+/g, '').replace(/-/g, '+').replace(/_/g, '/'));
+      const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    };
+
+    function fail(msg: string) {
+      out.value = '';
+      out.placeholder = msg;
+      out.style.color = '#ff8b84';
+      out.dataset.error = '1';
+    }
+    function ok(v: string) {
+      out.style.color = '';
+      out.placeholder = '';
+      delete out.dataset.error;
+      out.value = v;
+    }
+
+    function encode() {
+      const s = input.value;
+      if (!s) return ok('');
+      try {
+        switch (mode.value) {
+          case 'b64': return ok(toB64(s));
+          case 'b64url': return ok(toB64(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''));
+          case 'url': return ok(encodeURIComponent(s));
+          case 'html': return ok([...s].map((c) => {
+            const cp = c.codePointAt(0)!;
+            return cp > 127 || '<>&"\'\\'.includes(c) ? `&#${cp};` : c;
+          }).join(''));
+          case 'hex':
+            return ok([...new TextEncoder().encode(s)]
+              .map((b) => b.toString(16).padStart(2, '0')).join(' '));
+        }
+      } catch (e) {
+        fail(`编码失败：${e instanceof Error ? e.message : e}`);
+      }
+    }
+
+    function decode() {
+      // 解码读「结果」格；结果格空着就退回读原文格
+      const src = (out.value.trim() || input.value.trim());
+      if (!src) return ok('');
+      const s = src.replace(/\s+/g, '');
+      try {
+        switch (mode.value) {
+          case 'b64':
+          case 'b64url': return ok(fromB64(src));
+          case 'url': return ok(decodeURIComponent(src));
+          case 'html': {
+            const el = document.createElement('textarea');
+            el.innerHTML = src;
+            return ok(el.value);
+          }
+          case 'hex': {
+            const hex = s.replace(/[^0-9a-fA-F]/g, '');
+            if (!hex.length) throw new Error('没有找到十六进制字符');
+            if (hex.length % 2) throw new Error('十六进制位数是奇数');
+            const arr = new Uint8Array(hex.length / 2);
+            for (let i = 0; i < arr.length; i++) {
+              arr[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+            }
+            return ok(new TextDecoder().decode(arr));
+          }
+        }
+      } catch (e) {
+        fail(`解码失败：${e instanceof Error ? e.message : e}（输入可能不是这种编码）`);
+      }
+    }
+
+    $('enc').addEventListener('click', encode);
+    $('dec').addEventListener('click', decode);
+    $('swap').addEventListener('click', () => {
+      const a = input.value;
+      input.value = out.value;
+      ok(a);
+    });
+    $('copy').addEventListener('click', async () => {
+      if (!out.value) return;
+      try {
+        await navigator.clipboard.writeText(out.value);
+        const b = $('copy');
+        b.textContent = '已复制';
+        setTimeout(() => (b.textContent = '复制结果'), 1200);
+      } catch { fail('复制失败，浏览器没给权限'); }
+    });
+    $('clear').addEventListener('click', () => {
+      input.value = ''; ok(''); input.focus();
+    });
+  </script>
+</Tool>

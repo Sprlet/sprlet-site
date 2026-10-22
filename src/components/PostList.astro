@@ -1,0 +1,42 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+export interface Props {
+  posts: CollectionEntry<'posts'>[];
+  showTags?: boolean;
+}
+
+const { posts, showTags = true } = Astro.props;
+
+const fmt = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+---
+
+{posts.length === 0 ? (
+  <p class="empty">还没有文章。</p>
+) : (
+  <ul class="post-list">
+    {posts.map((post) => (
+      <li class="post-item">
+        <a class="post-link" href={`/blog/${post.id}/`}>
+          <div>
+            <h3 class="post-title">{post.data.title}</h3>
+            {post.data.description && (
+              <p class="post-excerpt">{post.data.description}</p>
+            )}
+            {showTags && post.data.tags.length > 0 && (
+              <div class="post-tags">
+                {post.data.tags.map((tag) => (
+                  <span class="tag-pill">{tag}</span>
+                ))}
+              </div>
+            )}
+          </div>
+          <time class="post-meta" datetime={post.data.pubDate.toISOString()}>
+            {fmt(post.data.pubDate)}
+          </time>
+        </a>
+      </li>
+    ))}
+  </ul>
+)}

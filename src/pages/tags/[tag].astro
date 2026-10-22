@@ -1,0 +1,53 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import PostList from '../../components/PostList.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  const map = new Map<string, typeof posts>();
+  for (const p of posts) {
+    for (const t of p.data.tags) {
+      if (!map.has(t)) map.set(t, []);
+      map.get(t)!.push(p);
+    }
+  }
+  return [...map.entries()].map(([tag, list]) => ({
+    params: { tag },
+    props: {
+      tag,
+      posts: list.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()),
+    },
+  }));
+}
+
+export interface Props {
+  tag: string;
+  posts: any[];
+}
+
+const { tag, posts } = Astro.props;
+---
+
+<Base title={`标签：${tag}`} description={`所有打了「${tag}」标签的文章。`}>
+  <Header slot="header" />
+
+  <div class="wrap">
+    <div class="page-head">
+      <p class="article-kicker">
+        <a href="/blog" style="color:inherit">博客</a>
+        <span aria-hidden="true">/</span>
+        <span>标签</span>
+      </p>
+      <h1>{tag}</h1>
+      <p>{posts.length} 篇</p>
+    </div>
+    <div class="page-body">
+      <PostList posts={posts} showTags={false} />
+    </div>
+  </div>
+
+  <Footer slot="footer" />
+</Base>

@@ -1,0 +1,103 @@
+---
+import Tool from '../../layouts/Tool.astro';
+---
+
+<Tool slug="qrcode">
+  <div class="tool-shell">
+    <div class="field">
+      <label for="text">内容</label>
+      <textarea id="text" spellcheck="false" style="min-height:5rem"
+        placeholder="https://example.com 或任意文字"></textarea>
+    </div>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap">
+      <div class="field" style="flex:1 1 160px;margin-bottom:.6rem">
+        <label for="size">尺寸（px）</label>
+        <input type="number" id="size" value="320" min="96" max="1024" step="16" />
+      </div>
+      <div class="field" style="flex:1 1 160px;margin-bottom:.6rem">
+        <label for="ecc">纠错等级</label>
+        <select id="ecc">
+          <option value="L">L · 7%</option>
+          <option value="M" selected>M · 15%</option>
+          <option value="Q">Q · 25%</option>
+          <option value="H">H · 30%</option>
+        </select>
+      </div>
+      <div class="field" style="flex:1 1 160px;margin-bottom:.6rem">
+        <label for="pad">留白</label>
+        <input type="number" id="pad" value="2" min="0" max="10" />
+      </div>
+    </div>
+    <div class="tool-actions">
+      <button class="btn-sm primary" id="gen" type="button">生成</button>
+      <button class="btn-sm" id="dl" type="button" disabled>下载 PNG</button>
+    </div>
+    <div id="stage" style="margin-top:1.3rem;display:flex;justify-content:center;align-items:center;min-height:120px">
+      <p class="empty" id="hint" style="padding:1rem 0">输入内容后点生成。</p>
+    </div>
+  </div>
+
+  <script>
+    import QRCode from 'qrcode';
+
+    const $ = (id: string) => document.getElementById(id)!;
+    const stage = $('stage');
+    const hint = $('hint');
+    let canvasEl: HTMLCanvasElement | null = null;
+
+    async function generate() {
+      const text = ($('text') as HTMLTextAreaElement).value;
+      if (!text.trim()) {
+        stage.innerHTML = '';
+        stage.appendChild(hint);
+        hint.textContent = '先输入点内容。';
+        hint.style.display = '';
+        ($('dl') as HTMLButtonElement).disabled = true;
+        return;
+      }
+      const size = Math.min(1024, Math.max(96, Number(($('size') as HTMLInputElement).value) || 320));
+      const ecc = ($('ecc') as HTMLSelectElement).value as 'L' | 'M' | 'Q' | 'H';
+      const pad = Math.min(10, Math.max(0, Number(($('pad') as HTMLInputElement).value) || 0));
+
+      try {
+        const canvas = document.createElement('canvas');
+        await QRCode.toCanvas(canvas, text, {
+          width: size,
+          margin: pad,
+          errorCorrectionLevel: ecc,
+          color: { dark: '#000000', light: '#ffffff' },
+        });
+        canvas.style.borderRadius = '10px';
+        canvas.style.border = '1px solid var(--line)';
+        canvas.style.maxWidth = '100%';
+        canvas.style.height = 'auto';
+        stage.innerHTML = '';
+        stage.appendChild(canvas);
+        canvasEl = canvas;
+        ($('dl') as HTMLButtonElement).disabled = false;
+      } catch (e) {
+        stage.innerHTML = '';
+        const p = document.createElement('p');
+        p.className = 'empty';
+        p.style.color = '#ff8b84';
+        p.textContent = `生成失败：${e instanceof Error ? e.message : e}`;
+        stage.appendChild(p);
+        ($('dl') as HTMLButtonElement).disabled = true;
+      }
+    }
+
+    $('gen').addEventListener('click', generate);
+
+    $('dl').addEventListener('click', () => {
+      if (!canvasEl) return;
+      const a = document.createElement('a');
+      a.download = 'qrcode.png';
+      a.href = canvasEl.toDataURL('image/png');
+      a.click();
+    });
+
+    ($('text') as HTMLTextAreaElement).addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') generate();
+    });
+  </script>
+</Tool>

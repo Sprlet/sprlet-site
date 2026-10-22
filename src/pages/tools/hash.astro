@@ -1,0 +1,60 @@
+---
+import Tool from '../../layouts/Tool.astro';
+---
+
+<Tool slug="hash">
+  <div class="tool-shell">
+    <div class="field">
+      <label for="in">文本</label>
+      <textarea id="in" spellcheck="false" placeholder="要算摘要的内容"></textarea>
+    </div>
+    <div class="tool-actions">
+      <button class="btn-sm primary" id="calc" type="button">计算</button>
+      <button class="btn-sm" id="clear" type="button">清空</button>
+    </div>
+    <div class="out" id="out" aria-live="polite">等待输入。全部用浏览器自带的 Web Crypto 算，不联网。</div>
+  </div>
+
+  <script>
+    const $ = (id: string) => document.getElementById(id)!;
+    const algs = [
+      ['SHA-1', 'SHA-1'],
+      ['SHA-256', 'SHA-256'],
+      ['SHA-384', 'SHA-384'],
+      ['SHA-512', 'SHA-512'],
+    ];
+
+    async function digest(alg: string, text: string) {
+      const data = new TextEncoder().encode(text);
+      const buf = await crypto.subtle.digest(alg, data);
+      return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    $('calc').addEventListener('click', async () => {
+      const out = $('out');
+      const text = ($('in') as HTMLTextAreaElement).value;
+      if (!text) {
+        out.textContent = '先输入点内容。';
+        out.classList.remove('err');
+        return;
+      }
+      try {
+        const lines: string[] = [];
+        for (const [label, alg] of algs) {
+          lines.push(`${label.padEnd(8)} ${await digest(alg, text)}`);
+        }
+        out.classList.remove('err');
+        out.textContent = lines.join('\n\n');
+      } catch (e) {
+        out.classList.add('err');
+        out.textContent = `计算出错：${e instanceof Error ? e.message : e}`;
+      }
+    });
+
+    $('clear').addEventListener('click', () => {
+      ($('in') as HTMLTextAreaElement).value = '';
+      $('out').textContent = '等待输入。全部用浏览器自带的 Web Crypto 算，不联网。';
+      $('out').classList.remove('err');
+    });
+  </script>
+</Tool>

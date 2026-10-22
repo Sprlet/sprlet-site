@@ -1,0 +1,93 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  const sorted = posts.sort((a, b) => a.data.pubDate.valueOf() - b.data.pubDate.valueOf());
+
+  return sorted.map((post, i) => ({
+    params: { slug: post.id },
+    props: {
+      post,
+      prev: sorted[i - 1] ?? null,
+      next: sorted[i + 1] ?? null,
+    },
+  }));
+}
+
+export interface Props {
+  post: CollectionEntry<'posts'>;
+  prev: CollectionEntry<'posts'> | null;
+  next: CollectionEntry<'posts'> | null;
+}
+
+const { post, prev, next } = Astro.props;
+const { Content, headings } = await render(post);
+
+const fmt = (d: Date) =>
+  `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`;
+
+const words = (post.body ?? '').replace(/\s+/g, '').length;
+const minutes = Math.max(1, Math.round(words / 380));
+---
+
+<Base
+  title={post.data.title}
+  description={post.data.description}
+  type="article"
+  published={post.data.pubDate}
+>
+  <Header slot="header" />
+
+  <div class="wrap">
+    <article>
+      <header class="article-head">
+        <p class="article-kicker">
+          <a href="/blog" style="color:inherit">博客</a>
+          <span aria-hidden="true">/</span>
+          <time datetime={post.data.pubDate.toISOString()}>{fmt(post.data.pubDate)}</time>
+          <span aria-hidden="true">·</span>
+          <span>约 {minutes} 分钟</span>
+        </p>
+        <h1>{post.data.title}</h1>
+        {post.data.description && <p class="article-lede">{post.data.description}</p>}
+        {post.data.tags.length > 0 && (
+          <div class="post-tags" style="margin-top:1.1rem">
+            {post.data.tags.map((t) => (
+              <a class="tag-pill" href={`/tags/${encodeURIComponent(t)}/`}>{t}</a>
+            ))}
+          </div>
+        )}
+      </header>
+
+      <div class="prose">
+        <Content />
+      </div>
+
+      <div class="article-foot">
+        <nav class="prevnext" aria-label="前后文章">
+          {prev ? (
+            <a href={`/blog/${prev.id}/`}>
+              <span class="lbl">上一篇</span>
+              <span class="ttl">{prev.data.title}</span>
+            </a>
+          ) : <span></span>}
+          {next ? (
+            <a class="next" href={`/blog/${next.id}/`}>
+              <span class="lbl">下一篇</span>
+              <span class="ttl">{next.data.title}</span>
+            </a>
+          ) : <span></span>}
+        </nav>
+        <p style="font-size:var(--step--1);color:var(--fg-faint);font-family:var(--font-mono)">
+          <a href="/blog" style="color:inherit">← 回到全部文章</a>
+        </p>
+      </div>
+    </article>
+  </div>
+
+  <Footer slot="footer" />
+</Base>
