@@ -1043,6 +1043,9 @@ main { flex: 1 0 auto; }
 }
 .footer-links a:hover { color: var(--accent); }
 
+.footer-beian a { color: var(--fg-faint); }
+.footer-beian a:hover { color: var(--accent); }
+
 /* ============================================================
    Utilities
    ============================================================ */
