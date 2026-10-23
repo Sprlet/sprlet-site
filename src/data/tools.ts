@@ -10,6 +10,14 @@ export interface Tool {
 
 export const tools: Tool[] = [
   {
+    slug: 'flomo',
+    title: 'flomo 笔记',
+    desc: 'flomo 网页版整页嵌进来，随手记两笔。',
+    long: '把 flomo 的网页版整个嵌在这一页里，不用开新标签也不用跳走。登录态是 flomo 自己的，第一次进来登一下就行。',
+    icon: 'note',
+    tag: '笔记',
+  },
+  {
     slug: 'exam',
     title: '刷题助手',
     desc: '自己的题库应用，刷题、错题本和模拟考。',
