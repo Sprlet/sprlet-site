@@ -4,8 +4,8 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { tools, getTool } from '../data/tools';
 
-export interface Props { slug: string }
-const { slug } = Astro.props;
+export interface Props { slug: string; wide?: boolean }
+const { slug, wide = false } = Astro.props;
 const tool = getTool(slug)!;
 const others = tools.filter((t) => t.slug !== slug).slice(0, 3);
 ---
@@ -24,7 +24,7 @@ const others = tools.filter((t) => t.slug !== slug).slice(0, 3);
       <p>{tool.long}</p>
     </div>
 
-    <div class="page-body" style="max-width:820px">
+    <div class="page-body" style={`max-width:${wide ? "1100px" : "820px"}`}>
       <slot />
 
       {others.length > 0 && (
