@@ -38,7 +38,11 @@ const others = tools.filter((t) => t.slug !== slug).slice(0, 3);
               <li class="card">
                 <h3 class="card-title" style="font-size:var(--step-0)">{t.title}</h3>
                 <p class="card-desc">{t.desc}</p>
-                <a class="card-foot" href={`/tools/${t.slug}`}>打开 →</a>
+                <a class="card-foot" href={t.external ?? `/tools/${t.slug}`}
+                  target={t.external ? '_blank' : undefined}
+                  rel={t.external ? 'noopener' : undefined}>
+                  打开 {t.external ? '↗' : '→'}
+                </a>
               </li>
             ))}
           </ul>

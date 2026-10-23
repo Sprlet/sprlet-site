@@ -24,7 +24,7 @@ export const tools: Tool[] = [
     long: '刷题用的独立应用，题库、错题本、模拟考都在里面。它有自己的仓库，单独部署，从这儿过去就行。',
     icon: 'book',
     tag: '学习',
-    external: 'https://sprlety.me/exam/',
+    external: '/exam/',
   },
   {
     slug: 'json',

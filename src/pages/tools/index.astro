@@ -39,7 +39,7 @@ const icons: Record<string, string> = {
             <a class="card-foot" href={t.external ?? `/tools/${t.slug}`}
               target={t.external ? '_blank' : undefined}
               rel={t.external ? 'noopener' : undefined}>
-              {t.tag} · 打开 →
+              {t.tag} · 打开 {t.external ? '↗' : '→'}
             </a>
           </li>
         ))}
